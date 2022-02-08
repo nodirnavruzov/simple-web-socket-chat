@@ -46,8 +46,6 @@ wss.on('connection', async (ws) => {
   ws.on('message', async (data) => {
     const msg = JSON.parse(data)
     const body = msg.body
-    console.log('message ====>>>', msg)
-    
     switch (msg.action) {
       case 'LOGIN':
         if (body.id) {
@@ -94,8 +92,6 @@ wss.on('connection', async (ws) => {
 
       case 'JOIN_TO_ROOM':
         found = await Room.findOne({id: body.room.id})
-        console.log('wss.clients', wss.clients)
-        
         if(found) {
           const participants = found.participants
           participants.push(body.user.id)
@@ -157,7 +153,6 @@ wss.on('connection', async (ws) => {
         found = await Room.findOne({id: body.roomId})
         if(found) {
           const participants = found.participants
-          console.log('participants', participants)
           found.participants = participants.filter((user) => {
             return user.id !== body.user.id
           })
@@ -186,9 +181,7 @@ wss.on('connection', async (ws) => {
   const interval = setInterval(() => {
     wss.clients.forEach((ws) => {
       if (ws.isAlive === false) {
-        console.log('ws.id', ws.id)
         wss.clients.delete(ws.id)
-        console.log('wss.clients', wss.clients)
         return ws.terminate()
       }
       ws.isAlive = false;
@@ -196,10 +189,9 @@ wss.on('connection', async (ws) => {
         action: 'PING',
       }))
     });
-  }, 30000);
+  }, 10000);
 
   ws.on('close', () => {
-    console.log('disconnected', ws.id);
     deleteParticipants(ws.id)
     clearInterval(interval);
   });
