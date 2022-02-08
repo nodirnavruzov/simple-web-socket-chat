@@ -1,0 +1,22 @@
+{
+  "name": "chat-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon app"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.0.0",
+    "moment": "^2.29.1",
+    "mongoose": "^6.1.9",
+    "uuid": "^8.3.2",
+    "ws": "^8.4.2"
+  },
+  "optionalDependencies": {
+    "utf-8-validate": "^5.0.8"
+  }
+}
