@@ -8,6 +8,7 @@ const User = require('./model/user')
 const Room = require('./model/room');
 const mongoose = require('mongoose');
 const dateNow = require('./utils/date')
+require('dotenv').config()
 
 const port = process.env.PORT || 3000;
 
@@ -39,15 +40,17 @@ async function deleteParticipants(id) {
 }
 
 wss.on('connection', async (ws) => {
+  
   try {
     // await mongoose.connect('mongodb://127.0.0.1:27017/livechat');
-    await mongoose.connect('mongodb://localhost:27017/?readPreference=primary&appname=MongoDB%20Compass&directConnection=true&ssl=false');
+    await mongoose.connect(process.env.MONGO_URI);
   } catch (error) {
     console.error(error);
   }
 
   ws.id = uuid.v4()
   ws.isAlive = true
+  console.log('connection', ws.id)
 
   ws.send(JSON.stringify({
     action: 'CONNECTION',
@@ -57,25 +60,27 @@ wss.on('connection', async (ws) => {
   ws.on('message', async (data) => {
     const msg = JSON.parse(data)
     const body = msg.body
-    switch (msg.action) {
-      case 'LOGIN':
-        if (body.id) {
-          try {
-            await User.updateOne({id: body.id}, {id: ws.id});
-            user = await User.findOne({id: ws.id})
-            rooms = await Room.find({})
-            ws.send(JSON.stringify({
-              action: 'LOGIN',
-              body: {
-                rooms, 
-                user
-              }
-            }))
-          } catch (error) {
-            console.error(error);
-          }
 
-        } else {
+    switch (msg.action) {
+      case 'RE_LOGIN':
+        try {
+          const res = await User.updateOne({id: body.id}, {id: ws.id});
+          console.log('res', res)
+          user = await User.findOne({id: body.id})
+          console.log('user', user)
+          rooms = await Room.find({})
+          ws.send(JSON.stringify({
+            action: 'RE_LOGIN',
+            body: {
+              rooms, 
+              user
+            }
+          }))
+        } catch (error) {
+          console.error(error);
+        }
+        break
+      case 'LOGIN':
           try {
             body.id = ws.id
             found = await User.findOne({name: body.name})
@@ -83,6 +88,7 @@ wss.on('connection', async (ws) => {
               user = await User.create(body)
               await user.save()
               rooms = await Room.find({})
+              
               ws.send(JSON.stringify({
                 action: 'LOGIN',
                 body: {
@@ -94,7 +100,6 @@ wss.on('connection', async (ws) => {
           } catch (error) {
             console.error(error);
           }
-        }
         break;
 
       case 'CREATE_ROOM':
